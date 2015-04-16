@@ -123,4 +123,169 @@ describe("Test OrientoStore", function() {
         ], done);
     });
 
+    it("can will purge expired only", function(done) {
+        var store = new OrientoStore(util.object.merge({}, options));
+        var sid1 = "asdlgertw3s", sid2 = "b3458wzfw4rt3";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: sid1 }, done);
+            },
+            function(session, done) {
+                store.set(sid2, { val: sid2 }, done);
+            },
+            function(session, done) {
+                Session.findById(store._db, sid2, done);
+            },
+            function(dbInstance, done) {
+                dbInstance.expiry = new Date(Date.now() - 10000);
+                dbInstance.save(store._db, done);
+            },
+            function(dbInstance, done) {
+                store._purgeExpired(done);
+            },
+            function(totalPurged, done) {
+                assert(1 == totalPurged);
+                Session.find(store._db, done);
+            },
+            function(items, done) {
+                assert(1 == items.length);
+                assert(sid1 == items[0].id);
+                Session.delete(store._db, {}, done);
+            }
+        ], done);
+    });
+
+    it("will purge on schedule", function(done) {
+        var store = new OrientoStore(util.object.merge({ purgeInterval: 10 }, options));
+        var sid1 = "asi347f8gf443", sid2 = "b34pwthalifg34";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: sid1 }, done);
+            },
+            function(session, done) {
+                store.set(sid2, { val: sid2 }, done);
+            },
+            function(session, done) {
+                Session.findById(store._db, sid2, done);
+            },
+            function(dbInstance, done) {
+                dbInstance.expiry = new Date(Date.now() - 10000);
+                dbInstance.save(store._db, done);
+            },
+            function(dbInstance, done) {
+                setTimeout(done, 25); // make sure we go over 1 purge iteration
+            },
+            function(done) {
+                Session.find(store._db, done);
+            },
+            function(items, done) {
+                assert(1 == items.length);
+                assert(sid1 == items[0].id);
+                Session.delete(store._db, {}, done);
+            }
+        ], done);
+    });
+
+    it("can destroy sessions", function(done) {
+        var store = new OrientoStore(util.object.merge({}, options));
+        var sid1 = "ae5tzsergh54", sid2 = "bw4tqw54z35wr";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: sid1 }, done);
+            },
+            function(session, done) {
+                store.set(sid2, { val: sid2 }, done);
+            },
+            function(session, done) {
+                store.destroy(sid1, done);
+            },
+            function(count, done) {
+                assert(1 == count);
+                Session.find(store._db, done);
+            },
+            function(items, done) {
+                assert(1 == items.length);
+                assert(sid2 == items[0].id);
+                Session.delete(store._db, {}, done);
+            }
+        ], done);
+    });
+    
+    it("will touch only after interval", function(done) {
+        var store = new OrientoStore(util.object.merge({ minTouchInterval: 50 }, options));
+        var sid1 = "a45zseh5w45z";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: 25 }, done);
+            },
+            function(session, done) {
+                setTimeout(done, 20);
+            },
+            function(done) {
+                store.touch(sid1, {}, done);
+            },
+            function(when, done) {
+                assert(19 < new Date() - when); // touch did not update
+                setTimeout(done, 30);
+            },
+            function(done) {
+                store.touch(sid1, {}, done);
+            },
+            function(when, done) {
+                assert(40 > new Date() - when); // touched
+                Session.delete(store._db, {}, done);
+            }
+        ], done);
+    });
+
+    it("can get the number of stored sessions", function(done) {
+        var store = new OrientoStore(util.object.merge({}, options));
+        var sid1 = "aertgaselbf348", sid2 = "bqw4ptrhgqfg";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: sid1 }, done);
+            },
+            function(session, done) {
+                store.set(sid2, { val: sid2 }, done);
+            },
+            function(session, done) {
+                store.length(done);
+            },
+            function(count, done) {
+                assert(2 == count);
+                Session.delete(store._db, {}, done);
+            }
+        ], done);
+    });
+
+    it("can clear all sessions from the DB", function(done) {
+        var store = new OrientoStore(util.object.merge({}, options));
+        var sid1 = "asezegtg5seg", sid2 = "bw34twehgrzh";
+
+        async.waterfall([
+            function(done) {
+                store.set(sid1, { val: sid1 }, done);
+            },
+            function(session, done) {
+                store.set(sid2, { val: sid2 }, done);
+            },
+            function(session, done) {
+                store.clear(done);
+            },
+            function(count, done) {
+                assert(2 == count);
+                store.length(done);
+            },
+            function(count, done) {
+                assert(0 == count);
+                done();
+            }
+        ], done);
+    });
+
 });

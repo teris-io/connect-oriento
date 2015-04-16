@@ -31,8 +31,12 @@ var initForSession = function(connect, callback) {
             }
         }
         
+        /* ensure DB has the class and the index on id */
         this._ensureDBClass(callback);
         
+        /* setup purge scheduler */
+        setInterval(function(store) { store._purgeExpired(); }, this._options.purgeInterval, this);
+
         /* ugly Oriento issue of connection timeout */
         var interval = this._options.pingInterval;
         /* init DB ping to now */
@@ -71,8 +75,9 @@ var initForSession = function(connect, callback) {
                 if (!dbInstance) {
                     dbInstance = new Session({ id: sid, session: {} });
                 }
-                dbInstance.session = util.object.merge(dbInstance.session, session, true);
+                dbInstance.session = util.object.merge(dbInstance.session, session || {}, true);
                 dbInstance.touched = new Date();
+                dbInstance.expiry = self._computeExpiry(session);
                 dbInstance.save(db, function(err, dbInstance) {
                     done(err, dbInstance ? dbInstance.session : {});
                 });
@@ -91,12 +96,17 @@ var initForSession = function(connect, callback) {
                 Session.findById(db, sid, done);
             },
             function(dbInstance, done) {
+                var now = new Date();
                 if (!dbInstance) {
-                    dbInstance = new Session({ id: sid, session: session });
+                    dbInstance = new Session({ id: sid, session: session || {} });
+                } else if (now - dbInstance.touched < self._options.minTouchInterval) {
+                    // do not touch if interval too small
+                    return done(null, dbInstance.touched);
                 }
-                dbInstance.touched = new Date();
+                dbInstance.touched = now;
+                dbInstance.expiry = self._computeExpiry(session);
                 dbInstance.save(db, function(err, dbInstance) {
-                    done(err, dbInstance ? dbInstance.session : {});
+                    done(err, now);
                 });
             }
         ], callback || defaults.returnOneCallback);
@@ -230,6 +240,26 @@ var initForSession = function(connect, callback) {
         }
         this.emit(event);
         this._state = state;
+    };
+
+    OrientoStore.prototype._computeExpiry = function(session) {
+        if (session && session.cookie && session.cookie.expires) {
+            return new Date(session.cookie.expires);
+        }
+        return new Date(Date.now() + this._options.maxAge);
+    };
+
+    OrientoStore.prototype._purgeExpired = function(callback) {
+        var self = this, db = self._db;
+        callback = callback || defaults.returnOneCallback;
+        db.query("DELETE VERTEX WHERE expiry < :date AND @class=:clazz", {
+            params: {
+                date: new Date(),
+                clazz: Session.name
+            }
+        }).then(function(total) {
+            callback(null, total);
+        }).catch(callback);
     };
 
     return OrientoStore;

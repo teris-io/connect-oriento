@@ -2,7 +2,10 @@ var oriento = require("oriento"),
     qs = require("qs");
 
 var ORIENT_DEFAULTS = {
-        pingInterval: 60000,
+        minTouchInterval: 1000,        // 1 second
+        pingInterval: 1000 * 60,       // 1 minute
+        purgeInterval: 1000 * 600,     // 10 minutes
+        maxAge: 1000 * 3600 * 24 * 10, // 10 days
         hash: false
     };
 
