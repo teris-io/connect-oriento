@@ -6,8 +6,9 @@ var async = require("async"),
 var Session = require("./session"),
     defaults = require("./defaults");
     
-var DISCONNECTED = -1,
-    // CONNECTING = 0,
+var INIT = -2,
+    DISCONNECTED = -1,
+    CONNECTING = 0,
     CONNECTED = 1;
 
 
@@ -19,7 +20,7 @@ var initForSession = function(connect, callback) {
             Store.call(this, defaults.ensureGenericStoreOptions(options));
     
             this._options = defaults.ensureOrientoStoreOptions(options);
-            this._state = DISCONNECTED;
+            this._setState(INIT);
             this._ensureConnection();
         } catch(err) {
             if (callback) {
@@ -148,13 +149,15 @@ var initForSession = function(connect, callback) {
         if (self._state == CONNECTED && self._db) {
             return callback(null, self._db);
         }
+        /* ignore that we may be already connecting */
+        self._setState(CONNECTING);
         var err;
         try {
             self._db = oriento(self._options.server).use(self._options.server.db);
-            self._state = CONNECTED;
+            self._setState(CONNECTED);
         } catch(ex) {
             err = ex;
-            self._state = DISCONNECTED;
+            self._setState(DISCONNECTED);
         }
         return callback(err, self._db);
     };
@@ -208,6 +211,25 @@ var initForSession = function(connect, callback) {
         } else {
             return sid;
         }
+    };
+
+    OrientoStore.prototype._setState = function(state) {
+        var event;
+        switch (state) {
+            case DISCONNECTED:
+                event = "disconnected";
+                break;
+            case CONNECTING:
+                event = "connecting";
+                break;
+            case CONNECTED:
+                event = "connected";
+                break;
+            default:
+                event = "init";
+        }
+        this.emit(event);
+        this._state = state;
     };
 
     return OrientoStore;

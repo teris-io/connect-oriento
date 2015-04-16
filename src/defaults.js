@@ -1,20 +1,28 @@
 var oriento = require("oriento"),
     qs = require("qs");
 
-exports.ensureGenericStoreOptions = function(options) {
-    return options || {};
-};
-
-exports.ensureOrientoStoreOptions = function(options) {
-    var defaults = {
+var ORIENT_DEFAULTS = {
         pingInterval: 60000,
         hash: false
     };
 
+exports.ensureGenericStoreOptions = function(options) {
     var incoming = options || {},
         res = {};
-    for (var key in defaults) {
-        res[key] = incoming[key] || defaults[key];
+    for (var key in incoming) {
+        if (incoming.hasOwnProperty(key) && !ORIENT_DEFAULTS[key] && key != "server") {
+            res[key] = incoming[key];
+        }
+    }
+    return res;
+};
+
+exports.ensureOrientoStoreOptions = function(options) {
+
+    var incoming = options || {},
+        res = {};
+    for (var key in ORIENT_DEFAULTS) {
+        res[key] = incoming[key] || ORIENT_DEFAULTS[key];
     }
 
     /* the following mandatory fields do not have defaults */
