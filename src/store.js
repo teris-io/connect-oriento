@@ -55,7 +55,12 @@ var initForSession = function(connect, callback) {
             },
             function(done) {
                 Session.findById(db, sid, function(err, dbInstance) {
-                    done(err, dbInstance ? dbInstance.session || {} : {});
+                    var session = {};
+                    if (!err) {
+                        dbInstance = dbInstance || {};
+                        session = JSON.parse(dbInstance.session || "{}");
+                    }
+                    done(err, session);
                 });
             }
         ], callback || defaults.returnOneCallback);
@@ -73,13 +78,18 @@ var initForSession = function(connect, callback) {
             },
             function(dbInstance, done) {
                 if (!dbInstance) {
-                    dbInstance = new Session({ id: sid, session: {} });
+                    dbInstance = new Session({ id: sid });
                 }
-                dbInstance.session = util.object.merge(dbInstance.session, session || {}, true);
+                dbInstance.session = JSON.stringify(session || {});
                 dbInstance.touched = new Date();
                 dbInstance.expiry = self._computeExpiry(session);
                 dbInstance.save(db, function(err, dbInstance) {
-                    done(err, dbInstance ? dbInstance.session : {});
+                    var session = {};
+                    if (!err) {
+                        dbInstance = dbInstance || {};
+                        session = JSON.parse(dbInstance.session || "{}");
+                    }
+                    done(err, session);
                 });
             }
         ], callback || defaults.returnOneCallback);
@@ -98,14 +108,15 @@ var initForSession = function(connect, callback) {
             function(dbInstance, done) {
                 var now = new Date();
                 if (!dbInstance) {
-                    dbInstance = new Session({ id: sid, session: session || {} });
+                    dbInstance = new Session({ id: sid });
+                    dbInstance.session = JSON.stringify(session || {});
                 } else if (now - dbInstance.touched < self._options.minTouchInterval) {
                     // do not touch if interval too small
                     return done(null, dbInstance.touched);
                 }
                 dbInstance.touched = now;
                 dbInstance.expiry = self._computeExpiry(session);
-                dbInstance.save(db, function(err, dbInstance) {
+                dbInstance.save(db, function(err) {
                     done(err, now);
                 });
             }

@@ -31,7 +31,15 @@ describe("Test OrientoStore", function() {
     after(function(done) {
         Session.drop(cleanupStore._db, done);
     });
-    
+
+    it("can get non-existent record as empty object", function(done) {
+        var store = new OrientoStore(util.object.merge({}, options));
+        store.get("122342345345", function(err, session) {
+            assert(session instanceof Object);
+            done(err);
+        })
+    });
+
     it("can set and get sessions unhashed", function(done) {
         var store = new OrientoStore(util.object.merge({}, options));
         var sid1 = "asfhq3nwbf", sid2 = "bfngq438owf";
