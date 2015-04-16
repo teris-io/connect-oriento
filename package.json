@@ -1,0 +1,33 @@
+{
+    "name": "connect-oriento",
+    "version": "0.1.0",
+    "description": "Orient-DB session store for Express and Connect using the Oriento Node driver",
+    "keywords": [
+        "connect",
+        "session",
+        "express",
+        "orient-db",
+        "orientdb",
+        "oriento"
+    ],
+    "author": "Oleg Sklyar <osklyar@qucado.com>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/qucado/connect-oriento.git"
+    },
+    "bugs": {
+        "url": "https://github.com/qucado/connect-oriento/issues"
+    },
+    "dependencies": {
+        "async": "*",
+        "oriento": ">= 1.1.3"
+    },
+    "devDependencies": {
+        "express-session": ">= 1.0.0",
+        "mocha": "~2.1.0"
+    },
+    "scripts": {
+        "test" : "mocha --recursive"
+    },
+    "main": "./src"
+}
