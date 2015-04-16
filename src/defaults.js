@@ -1,4 +1,5 @@
-var oriento = require("oriento");
+var oriento = require("oriento"),
+    qs = require("qs");
 
 exports.ensureGenericStoreOptions = function(options) {
     return options || {};
@@ -15,11 +16,11 @@ exports.ensureOrientoStoreOptions = function(options) {
         res[key] = incoming[key] || defaults[key];
     }
 
-    if (incoming.server && incoming.db) {
-        res.server = incoming.server;
-        res.db = incoming.db;
+    /* the following mandatory fields do not have defaults */
+    if (incoming.server) {
+        res.server = incoming.server instanceof String ? qs.parse(incoming.server) : incoming.server;
     } else {
-        throw new Error("'server' or 'db' configuration missing");
+        throw new Error("'server' configuration missing");
     }
 
     /* test connection */
