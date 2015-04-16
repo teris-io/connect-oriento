@@ -1,4 +1,5 @@
 var async = require("async"),
+    crypto = require("crypto"),
     util = require("odm-util"),
     oriento = require("oriento");
 
@@ -13,7 +14,7 @@ var DISCONNECTED = -1,
 var initForSession = function(connect, callback) {
     var Store = connect.Store || connect.session.Store;
 
-    function OrientoStore(options) {
+    function OrientoStore(options, callback) {
         try {
             Store.call(this, defaults.ensureGenericStoreOptions(options));
     
@@ -22,7 +23,8 @@ var initForSession = function(connect, callback) {
             this._ensureConnection();
         } catch(err) {
             if (callback) {
-                return callback(err);
+                callback(err);
+                return;
             } else {
                 throw err;
             }
@@ -37,15 +39,18 @@ var initForSession = function(connect, callback) {
         setInterval(pingDb, interval, this._db, interval);
     }
 
+    util.clazz.inherit(OrientoStore, Store);
+
     OrientoStore.prototype.get = function(sid, callback) {
         var self = this, db = self._db;
+        sid = self._getHashedSid(sid);
         return async.waterfall([
             function(done) {
                 done(self._state < CONNECTED ? new Error("disconnected from the DB") : null);
             },
             function(done) {
                 Session.findById(db, sid, function(err, dbInstance) {
-                    done(err, fromDBInstance(dbInstance));
+                    done(err, dbInstance ? dbInstance.session || {} : {});
                 });
             }
         ], callback || defaults.returnOneCallback);
@@ -53,6 +58,7 @@ var initForSession = function(connect, callback) {
 
     OrientoStore.prototype.set = function(sid, session, callback) {
         var self = this, db = self._db;
+        sid = self._getHashedSid(sid);
         return async.waterfall([
             function(done) {
                 done(self._state < CONNECTED ? new Error("disconnected from the DB") : null);
@@ -62,17 +68,20 @@ var initForSession = function(connect, callback) {
             },
             function(dbInstance, done) {
                 if (!dbInstance) {
-                    dbInstance = new Session({ id: sid });
+                    dbInstance = new Session({ id: sid, session: {} });
                 }
-                dbInstance = mergeToDBInstance(dbInstance, session);
-                dbInstance["#touched"] = new Date();
-                dbInstance.save(done);
+                dbInstance.session = util.object.merge(dbInstance.session, session, true);
+                dbInstance.touched = new Date();
+                dbInstance.save(db, function(err, dbInstance) {
+                    done(err, dbInstance ? dbInstance.session : {});
+                });
             }
         ], callback || defaults.returnOneCallback);
     };
 
     OrientoStore.prototype.touch = function(sid, session, callback) {
         var self = this, db = self._db;
+        sid = self._getHashedSid(sid);
         return async.waterfall([
             function(done) {
                 done(self._state < CONNECTED ? new Error("disconnected from the DB") : null);
@@ -82,18 +91,19 @@ var initForSession = function(connect, callback) {
             },
             function(dbInstance, done) {
                 if (!dbInstance) {
-                    dbInstance = new Session({ id: sid });
-                    /* set data for new DB instances only */
-                    dbInstance = mergeToDBInstance(dbInstance, session);
+                    dbInstance = new Session({ id: sid, session: session });
                 }
-                dbInstance["#touched"] = new Date();
-                dbInstance.save(done);
+                dbInstance.touched = new Date();
+                dbInstance.save(db, function(err, dbInstance) {
+                    done(err, dbInstance ? dbInstance.session : {});
+                });
             }
         ], callback || defaults.returnOneCallback);
     };
 
     OrientoStore.prototype.destroy = function(sid, callback) {
         var self = this, db = self._db;
+        sid = self._getHashedSid(sid);
         return async.waterfall([
             function(done) {
                 done(self._state < CONNECTED ? new Error("disconnected from the DB") : null);
@@ -140,7 +150,7 @@ var initForSession = function(connect, callback) {
         }
         var err;
         try {
-            self._db = oriento(self._options.server).use(self._options.db);
+            self._db = oriento(self._options.server).use(self._options.server.db);
             self._state = CONNECTED;
         } catch(ex) {
             err = ex;
@@ -167,13 +177,15 @@ var initForSession = function(connect, callback) {
                 });
             },
             function(DBSessionClass, done) {
-                DBSessionClass.property.get("id").then(function() {
-                    done(null, DBSessionClass);
-                }).catch(function() {
-                    DBSessionClass.property.create({ name: 'id', type: 'String' }).then(function() {
-                        console.log("created " + idIndexName + " property");
+                DBSessionClass.property.get("id").then(function(prop) {
+                    if (prop == null) {
+                        DBSessionClass.property.create({ name: 'id', type: 'String' }).then(function() {
+                            console.log("created " + idIndexName + " property");
+                            done(null, DBSessionClass);
+                        }).catch(done);
+                    } else {
                         done(null, DBSessionClass);
-                    }).catch(done);
+                    }
                 });
             },
             function(DBSessionClass, done) {
@@ -189,7 +201,15 @@ var initForSession = function(connect, callback) {
         ], callback || defaults.returnOneCallback);
     };
 
-    util.clazz.inherit(OrientoStore, Store);
+    OrientoStore.prototype._getHashedSid = function(sid) {
+        var hash = this._options.hash;
+        if (hash) {
+            return crypto.createHash(hash.algorithm).update(hash.salt + sid).digest('hex');
+        } else {
+            return sid;
+        }
+    };
+
     return OrientoStore;
 };
 
@@ -211,21 +231,4 @@ var pingDb = function(db, interval) {
             console.error(err);
         });
     }
-};
-
-var mergeToDBInstance = function(dbInstance, session) {
-    return util.object.merge(dbInstance, session, true);
-};
-
-var fromDBInstance = function(dbInstance) {
-    var res = {};
-    if (dbInstance) {
-        for (var key in dbInstance) {
-            var startsWith = key.substr(0, 1);
-            if (dbInstance.hasOwnProperty(key) && startsWith != "#" && startsWith != "@" && key != "id") {
-                res[key] = dbInstance[key];
-            }
-        }
-    }
-    return res;
 };

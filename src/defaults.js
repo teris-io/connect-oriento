@@ -7,7 +7,8 @@ exports.ensureGenericStoreOptions = function(options) {
 
 exports.ensureOrientoStoreOptions = function(options) {
     var defaults = {
-        pingInterval: 60000
+        pingInterval: 60000,
+        hash: false
     };
 
     var incoming = options || {},
@@ -18,13 +19,17 @@ exports.ensureOrientoStoreOptions = function(options) {
 
     /* the following mandatory fields do not have defaults */
     if (incoming.server) {
-        res.server = incoming.server instanceof String ? qs.parse(incoming.server) : incoming.server;
+        res.server = typeof incoming.server == "string" ? qs.parse(incoming.server) : incoming.server;
     } else {
         throw new Error("'server' configuration missing");
     }
 
+    if (res.hash && !(res.hash.algorithm && res.hash.salt)) {
+        throw new Error("supply 'algorithm' and 'code' to enable SID hashing");
+    }
+
     /* test connection */
-    oriento(res.server).use(res.db);
+    oriento(res.server).use(res.server.db);
 
     return res;
 };
