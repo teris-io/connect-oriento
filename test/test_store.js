@@ -35,7 +35,7 @@ describe("Test OrientoStore", function() {
     it("can get non-existent record as empty object", function(done) {
         var store = new OrientoStore(util.object.merge({}, options));
         store.get("122342345345", function(err, session) {
-            assert(session instanceof Object);
+            assert(session == null);
             done(err);
         })
     });
@@ -46,12 +46,12 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: 25 }, done);
+                store.set(sid1, { cookie: {}, val: 25 }, done);
             },
             function(session, done) {
                 assert(25 == session.val);
                 /* update with a new value */
-                store.set(sid1, { val: 26 }, done);
+                store.set(sid1, { cookie: {}, val: 26 }, done);
             },
             function(session, done) {
                 assert(26 == session.val);
@@ -59,12 +59,12 @@ describe("Test OrientoStore", function() {
             },
             function(session, done) {
                 assert(26 == session.val);
-                store.set(sid2, { val: 34 }, done);
+                store.set(sid2, { cookie: {}, val: 34 }, done);
             },
             function(session, done) {
                 assert(34 == session.val);
                 /* update with a new value */
-                store.set(sid2, { val: 35 }, done);
+                store.set(sid2, { cookie: {}, val: 35 }, done);
             },
             function(session, done) {
                 assert(35 == session.val);
@@ -92,12 +92,12 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: 25 }, done);
+                store.set(sid1, { cookie: {}, val: 25 }, done);
             },
             function(session, done) {
                 assert(25 == session.val);
                 /* update with a new value */
-                store.set(sid1, { val: 26 }, done);
+                store.set(sid1, { cookie: {}, val: 26 }, done);
             },
             function(session, done) {
                 assert(26 == session.val);
@@ -105,12 +105,12 @@ describe("Test OrientoStore", function() {
             },
             function(session, done) {
                 assert(26 == session.val);
-                store.set(sid2, { val: 34 }, done);
+                store.set(sid2, { cookie: {}, val: 34 }, done);
             },
             function(session, done) {
                 assert(34 == session.val);
                 /* update with a new value */
-                store.set(sid2, { val: 35 }, done);
+                store.set(sid2, { cookie: {}, val: 35 }, done);
             },
             function(session, done) {
                 assert(35 == session.val);
@@ -137,10 +137,10 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: sid1 }, done);
+                store.set(sid1, { cookie: {}, val: sid1 }, done);
             },
             function(session, done) {
-                store.set(sid2, { val: sid2 }, done);
+                store.set(sid2, { cookie: {}, val: sid2 }, done);
             },
             function(session, done) {
                 Session.findById(store._db, sid2, done);
@@ -170,10 +170,10 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: sid1 }, done);
+                store.set(sid1, { cookie: {}, val: sid1 }, done);
             },
             function(session, done) {
-                store.set(sid2, { val: sid2 }, done);
+                store.set(sid2, { cookie: {}, val: sid2 }, done);
             },
             function(session, done) {
                 Session.findById(store._db, sid2, done);
@@ -202,10 +202,10 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: sid1 }, done);
+                store.set(sid1, { cookie: {}, val: sid1 }, done);
             },
             function(session, done) {
-                store.set(sid2, { val: sid2 }, done);
+                store.set(sid2, { cookie: {}, val: sid2 }, done);
             },
             function(session, done) {
                 store.destroy(sid1, done);
@@ -228,7 +228,7 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: 25 }, done);
+                store.set(sid1, { cookie: {}, val: 25 }, done);
             },
             function(session, done) {
                 setTimeout(done, 20);
@@ -256,10 +256,10 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: sid1 }, done);
+                store.set(sid1, { cookie: {}, val: sid1 }, done);
             },
             function(session, done) {
-                store.set(sid2, { val: sid2 }, done);
+                store.set(sid2, { cookie: {}, val: sid2 }, done);
             },
             function(session, done) {
                 store.length(done);
@@ -277,10 +277,10 @@ describe("Test OrientoStore", function() {
 
         async.waterfall([
             function(done) {
-                store.set(sid1, { val: sid1 }, done);
+                store.set(sid1, { cookie: {}, val: sid1 }, done);
             },
             function(session, done) {
-                store.set(sid2, { val: sid2 }, done);
+                store.set(sid2, { cookie: {}, val: sid2 }, done);
             },
             function(session, done) {
                 store.clear(done);

@@ -55,10 +55,13 @@ var initForSession = function(connect, callback) {
             },
             function(done) {
                 Session.findById(db, sid, function(err, dbInstance) {
-                    var session = {};
-                    if (!err) {
-                        dbInstance = dbInstance || {};
+                    var session = null;
+                    if (!err && dbInstance) {
                         session = JSON.parse(dbInstance.session || "{}");
+                        if (!session.cookie) {
+                            session = null;
+                            err = new Error("persisted session is expected to have a cookie");
+                        }
                     }
                     done(err, session);
                 });
@@ -74,20 +77,27 @@ var initForSession = function(connect, callback) {
                 done(self._state < CONNECTED ? new Error("disconnected from the DB") : null);
             },
             function(done) {
+                done(!(session && session.cookie) ? new Error("session is expected to have a cookie") : null);
+            },
+            function(done) {
                 Session.findById(db, sid, done);
             },
             function(dbInstance, done) {
                 if (!dbInstance) {
+                    // new session, otherwise update
                     dbInstance = new Session({ id: sid });
                 }
-                dbInstance.session = JSON.stringify(session || {});
+                dbInstance.session = JSON.stringify(session);
                 dbInstance.touched = new Date();
                 dbInstance.expiry = self._computeExpiry(session);
                 dbInstance.save(db, function(err, dbInstance) {
                     var session = {};
-                    if (!err) {
-                        dbInstance = dbInstance || {};
+                    if (!err && dbInstance) {
                         session = JSON.parse(dbInstance.session || "{}");
+                        if (!session.cookie) {
+                            session = null;
+                            err = new Error("persisted session is expected to have a cookie");
+                        }
                     }
                     done(err, session);
                 });
@@ -106,11 +116,11 @@ var initForSession = function(connect, callback) {
                 Session.findById(db, sid, done);
             },
             function(dbInstance, done) {
+                done(!(dbInstance && dbInstance.session) ? new Error("can only touch already persisted session") : null, dbInstance);
+            },
+            function(dbInstance, done) {
                 var now = new Date();
-                if (!dbInstance) {
-                    dbInstance = new Session({ id: sid });
-                    dbInstance.session = JSON.stringify(session || {});
-                } else if (now - dbInstance.touched < self._options.minTouchInterval) {
+                if (now - dbInstance.touched < self._options.minTouchInterval) {
                     // do not touch if interval too small
                     return done(null, dbInstance.touched);
                 }
