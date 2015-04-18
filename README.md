@@ -3,6 +3,15 @@
 Orient-DB session store for [Connect](https://github.com/senchalabs/connect) and [Express](http://expressjs.com/)
 based on the binary transfer protocol in `oriento`.
 
+## Installation
+
+```shell
+npm install connect-oriento
+```
+
+Written and tested on `io.js`, but should contain no `io.js` specific code and be runnable on `node.js`.
+
+
 ## Usage
 
 ### Express or Connect integration
