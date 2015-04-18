@@ -72,7 +72,7 @@ npm test
 
 (The MIT License)
 
-Copyright (c) 2015 Casey Banner &lt;osklyar@qucado.com&gt;
+Copyright (c) 2015 Oleg Sklyar &lt;osklyar@qucado.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
