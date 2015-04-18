@@ -1,6 +1,6 @@
 {
     "name": "connect-oriento",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Orient-DB session store for Express and Connect using the Oriento Node driver",
     "keywords": [
         "connect",
