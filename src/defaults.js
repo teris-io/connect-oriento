@@ -1,3 +1,5 @@
+"use strict";
+
 var oriento = require("oriento"),
     qs = require("qs");
 

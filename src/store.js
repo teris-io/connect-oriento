@@ -1,6 +1,8 @@
+"use strict";
+
 var async = require("async"),
     crypto = require("crypto"),
-    util = require("odm-util"),
+    util = require("util"),
     oriento = require("oriento");
 
 var Session = require("./session"),
@@ -44,7 +46,7 @@ var initForSession = function(connect, callback) {
         setInterval(pingDb, interval, this._db, interval);
     }
 
-    util.clazz.inherit(OrientoStore, Store);
+    util.inherits(OrientoStore, Store);
 
     OrientoStore.prototype.get = function(sid, callback) {
         var self = this, db = self._db;

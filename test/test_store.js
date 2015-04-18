@@ -2,8 +2,7 @@ var storeLib = require("../src");
 
 var session = require('express-session'),
     assert = require("assert"),
-    async = require("async"),
-    util = require("odm-util");
+    async = require("async");
 
 var Session = require("../src/session");
 
@@ -33,7 +32,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can get non-existent record as empty object", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         store.get("122342345345", function(err, session) {
             assert(session == null);
             done(err);
@@ -41,7 +40,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can set and get sessions unhashed", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         var sid1 = "asfhq3nwbf", sid2 = "bfngq438owf";
 
         async.waterfall([
@@ -86,7 +85,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can set and get sessions hashed", function(done) {
-        var store = new OrientoStore(util.object.merge({ hash: { algorithm: "sha1", salt: "foo" } }, options));
+        var store = new OrientoStore(merge({ hash: { algorithm: "sha1", salt: "foo" } }, options));
         var sid1 = "asfhq3nwbf", sid2 = "bfngq438owf";
         var hSid1 = store._getHashedSid(sid1), hSid2 = store._getHashedSid(sid2);
 
@@ -132,7 +131,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can will purge expired only", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         var sid1 = "asdlgertw3s", sid2 = "b3458wzfw4rt3";
 
         async.waterfall([
@@ -165,7 +164,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("will purge on schedule", function(done) {
-        var store = new OrientoStore(util.object.merge({ purgeInterval: 10 }, options));
+        var store = new OrientoStore(merge({ purgeInterval: 10 }, options));
         var sid1 = "asi347f8gf443", sid2 = "b34pwthalifg34";
 
         async.waterfall([
@@ -197,7 +196,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can destroy sessions", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         var sid1 = "ae5tzsergh54", sid2 = "bw4tqw54z35wr";
 
         async.waterfall([
@@ -223,7 +222,7 @@ describe("Test OrientoStore", function() {
     });
     
     it("will touch only after interval", function(done) {
-        var store = new OrientoStore(util.object.merge({ minTouchInterval: 50 }, options));
+        var store = new OrientoStore(merge({ minTouchInterval: 500 }, options));
         var sid1 = "a45zseh5w45z";
 
         async.waterfall([
@@ -231,27 +230,27 @@ describe("Test OrientoStore", function() {
                 store.set(sid1, { cookie: {}, val: 25 }, done);
             },
             function(session, done) {
-                setTimeout(done, 20);
+                setTimeout(done, 50);
             },
             function(done) {
                 store.touch(sid1, {}, done);
             },
             function(when, done) {
-                assert(19 < new Date() - when); // touch did not update
-                setTimeout(done, 30);
+                assert(49 < new Date() - when); // touch did not update
+                setTimeout(done, 450);
             },
             function(done) {
                 store.touch(sid1, {}, done);
             },
             function(when, done) {
-                assert(40 > new Date() - when); // touched
+                assert(499 > new Date() - when); // touched
                 Session.delete(store._db, {}, done);
             }
         ], done);
     });
 
     it("can get the number of stored sessions", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         var sid1 = "aertgaselbf348", sid2 = "bqw4ptrhgqfg";
 
         async.waterfall([
@@ -272,7 +271,7 @@ describe("Test OrientoStore", function() {
     });
 
     it("can clear all sessions from the DB", function(done) {
-        var store = new OrientoStore(util.object.merge({}, options));
+        var store = new OrientoStore(merge({}, options));
         var sid1 = "asezegtg5seg", sid2 = "bw34twehgrzh";
 
         async.waterfall([
@@ -296,4 +295,18 @@ describe("Test OrientoStore", function() {
         ], done);
     });
 
+    // local utility 
+    var merge = function(to, from, overwrite) {
+        if (from instanceof Object) {
+            for (var key in from) {
+                if (from.hasOwnProperty(key) && (overwrite || !to[key])) {
+                    to[key] = from [key];
+                }
+            }
+        }
+        return to;
+    };
+
+
 });
+

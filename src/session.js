@@ -1,12 +1,11 @@
+"use strict";
 
-var util = require("odm-util"),
-    DBClass = util.DBClass,
-    clazz = util.clazz;
+var DBClass = require("oriento-odm").DBClass;
     
 function Session(data) {
     DBClass.apply(this, arguments);
 }
 
-clazz.inherit(Session, DBClass);
+DBClass.subclass(Session);
 
 module.exports = Session;
