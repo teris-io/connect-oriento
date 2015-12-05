@@ -1,3 +1,5 @@
+## Project moved to https://ventu.tech/node/connect-oriento
+
 # connect-oriento
 
 Orient-DB session store for [Connect](https://github.com/senchalabs/connect) and [Express](http://expressjs.com/)
