@@ -1,9 +1,8 @@
-## Project moved to https://ventu.tech/node/connect-oriento
+#  This project is no longer maintained
 
 # connect-oriento
 
-Orient-DB session store for [Connect](https://github.com/senchalabs/connect) and [Express](http://expressjs.com/)
-based on the binary transfer protocol in `oriento`.
+Orient-DB session store for [Connect](https://github.com/senchalabs/connect) and [Express](http://expressjs.com/) based on the binary transfer protocol in `oriento`.
 
 ## Installation
 
@@ -74,7 +73,7 @@ npm test
 
 (The MIT License)
 
-Copyright (c) 2015 Oleg Sklyar &lt;osklyar@qucado.com&gt;
+Copyright (c) 2015 ventu.io, Oleg Sklyar.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
