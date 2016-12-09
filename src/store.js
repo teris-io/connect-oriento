@@ -275,10 +275,9 @@ var initForSession = function(connect, callback) {
     OrientoStore.prototype._purgeExpired = function(callback) {
         var self = this, db = self._db;
         callback = callback || defaults.returnOneCallback;
-        db.query("DELETE VERTEX WHERE expiry < :date AND @class=:clazz", {
+        db.query("DELETE VERTEX " + Session.name + " WHERE expiry < :date", {
             params: {
-                date: new Date(),
-                clazz: Session.name
+                date: new Date()
             }
         }).then(function(total) {
             callback(null, total);
