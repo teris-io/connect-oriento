@@ -1,5 +1,3 @@
-#  This project is no longer maintained
-
 # connect-oriento
 
 Orient-DB session store for [Connect](https://github.com/senchalabs/connect) and [Express](http://expressjs.com/) based on the binary transfer protocol in `oriento`.
